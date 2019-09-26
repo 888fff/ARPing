@@ -1,6 +1,11 @@
 #include "ARP_Chunk.h"
+#include "Defined.h"
 #include <string.h>
 #include <stdio.h>
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
 
 
 ARP_Chunk::ARP_Chunk()
@@ -40,31 +45,48 @@ void ARP_Chunk::SetOperationCode(short c)
 
 void ARP_Chunk::SetSourceHardwareAddress(const unsigned char * addr)
 {
-	memcpy(data + ARP_SHA_OFFSET, addr, ARP_HA_SIZE);
+	memcpy(data + ARP_SHA_OFFSET, addr, ARP_HA_SIZE * (sizeof *addr) );
 }
 
 void ARP_Chunk::SetSourceHardwareAddressStr(const char * addr)
 {
-	char *ptr;
-	char *p;
-	char buff[128];
-	strcpy_s(buff, sizeof buff,addr);
-	ptr = strtok_s(buff, ":" ,&p);
-	while (ptr != NULL) {
-		//printf("%s:", ptr);
-		ptr = strtok_s(NULL, ":",&p);
-
+	//这里可以有一些参数的验证，算了不写了，哈哈
+	string buff(addr);
+	string trans;
+	buff.erase(std::remove(buff.begin(), buff.end(), ':'), buff.end());
+	long len = buff.length();
+	for (long i = 0; i < len; i += 2)
+	{
+		string byte = buff.substr(i, 2);
+		//字符串转整形
+		char chr = (char)(int)strtol(byte.c_str(), NULL, 16);
+		trans.push_back(chr);
 	}
+	SetSourceHardwareAddress((BYTE)trans.c_str());
 }
 
 void ARP_Chunk::SetSourceProtocolAddress(const unsigned char * addr)
 {
 	memcpy(data + ARP_SPA_OFFSET, addr, ARP_PA_SIZE);
-
 }
 
 void ARP_Chunk::SetSourceProtocolAddressStr(const char * addr)
 {
+	string buff(addr);
+	buff.push_back('.');
+	string trans;
+	string ip;
+	string::size_type position;
+	position = buff.find(".");
+	while (position != buff.npos)
+	{
+		ip = buff.substr(0, position);
+		buff = buff.substr(position + 1);
+		char chr = (int)strtol(ip.c_str(), NULL, 10);
+		trans.push_back(chr);
+		position = buff.find(".");
+	}
+	SetSourceProtocolAddress((BYTE)trans.c_str());
 }
 
 void ARP_Chunk::SetTargetHardwareAddress(const unsigned char * addr)

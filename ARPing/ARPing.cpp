@@ -11,6 +11,7 @@ int main()
     std::cout << "Hello World!\n"; 
 	ARP_Chunk chunk;
 	chunk.SetSourceHardwareAddressStr("00:a0:24:71:e4:44");
+	chunk.SetSourceProtocolAddressStr("128.143.137.144");
 }
 
 // 运行程序: Ctrl + F5 或调试 >“开始执行(不调试)”菜单

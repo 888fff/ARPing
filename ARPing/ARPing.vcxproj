@@ -158,6 +158,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="ARP_Chunk.h" />
+    <ClInclude Include="Defined.h" />
     <ClInclude Include="NetFrame.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
