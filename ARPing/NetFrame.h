@@ -19,8 +19,7 @@ public:
 	int		GetType();
 	//
 	const unsigned char* GetData();
-
-
-
+protected:
+	unsigned char data[1600];
 };
 
