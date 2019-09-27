@@ -6,6 +6,11 @@ class NetFrame
 public:
 	NetFrame();
 	~NetFrame();
+	void CreateARPFrame(unsigned char* frame_data);
+
+
+
+public:
 	//
 	void FillFrame(unsigned char* data);
 	void ToString();

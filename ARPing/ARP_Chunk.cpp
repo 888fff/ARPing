@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <algorithm>
+#include <WinSock2.h>
 using namespace std;
 
 
@@ -15,19 +16,30 @@ ARP_Chunk::ARP_Chunk()
 	memset(data,0, ARP_CHUNK_SIZE);
 }
 
+ARP_Chunk::ARP_Chunk(const void * packet, long len)
+{
+	if (packet) {
+		memcpy(data, packet, len);
+	}
+	else {
+		memset(data, 0, ARP_CHUNK_SIZE);
+	}
+}
+
 
 ARP_Chunk::~ARP_Chunk()
 {
+
 }
 
 void ARP_Chunk::SetHardwareType(short t)
 {
-	memcpy(data + ARP_HT_OFFSET, &t, sizeof t);
+	*(short*)(data + ARP_HT_OFFSET) = htons(t);
 }
 
 void ARP_Chunk::SetProtocolType(short t)
 {
-	memcpy(data + ARP_PT_OFFSET, &t, sizeof t);
+	*(short*)(data + ARP_PT_OFFSET) = htons(t);
 }
 
 void ARP_Chunk::SetHardwareAddressLength(unsigned char len)
@@ -42,8 +54,7 @@ void ARP_Chunk::SetProtocolAddressLength(unsigned char len)
 
 void ARP_Chunk::SetOperationCode(short c)
 {
-	memcpy(data + ARP_OC_OFFSET, &c, sizeof c);
-
+	*(short*)(data + ARP_OC_OFFSET) = htons(c);
 }
 
 void ARP_Chunk::SetSourceHardwareAddress(const unsigned char * addr)
@@ -107,9 +118,10 @@ void ARP_Chunk::SetTargetProtocolAddressStr(const char * addr)
 short ARP_Chunk::GetHardwareType(string& out)
 {
 	short ht = *(short*)(data + ARP_HT_OFFSET);
+	ht = ntohs(ht);
 	stringstream ss;
 	ss << "0x" << std::hex << std::setw(4) << std::setfill('0') << ht;
-	out = ss.str();
+	ss >> out;
 	ss.clear();
 	return ht;
 }
@@ -117,9 +129,10 @@ short ARP_Chunk::GetHardwareType(string& out)
 short ARP_Chunk::GetProtocolType(string& out)
 {
 	short ret = *(short*)(data + ARP_PT_OFFSET);
+	ret = ntohs(ret);
 	stringstream ss;
 	ss << "0x" << std::hex << std::setw(4) << std::setfill('0') << ret;
-	out = ss.str();
+	ss >> out;
 	ss.clear();
 	return ret;
 }
@@ -129,7 +142,7 @@ BYTE ARP_Chunk::GetHardwareAddressLength(string& out)
 	unsigned int ret = static_cast<unsigned int>(*(data + ARP_HAL_OFFSET));
 	stringstream ss;
 	ss << std::dec << ret;
-	out = ss.str();
+	ss >> out;
 	ss.clear();
 	return ret;
 }
@@ -139,7 +152,7 @@ BYTE ARP_Chunk::GetProtocolAddressLength(string& out)
 	int ret = static_cast<unsigned int>(*(data + ARP_PAL_OFFSET));
 	stringstream ss;
 	ss << std::dec << ret;
-	out = ss.str();
+	ss >> out;
 	ss.clear();
 
 	return ret;
@@ -148,9 +161,10 @@ BYTE ARP_Chunk::GetProtocolAddressLength(string& out)
 short ARP_Chunk::GetOperationCode(string& out)
 {
 	short ret = *(short*)(data + ARP_OC_OFFSET);
+	ret = ntohs(ret);
 	stringstream ss;
 	ss << "0x" << std::hex << std::setw(4) << std::setfill('0') << ret;
-	out = ss.str();
+	ss >> out;
 	ss.clear();
 
 	return ret;
@@ -158,18 +172,82 @@ short ARP_Chunk::GetOperationCode(string& out)
 
 void ARP_Chunk::GetSourceProtocolAddress(std::string & out)
 {
+	char remove;
+	stringstream ss;
+	for (int i = 0; i < ARP_PA_SIZE; ++i)
+		ss << "." <<std::dec << static_cast<unsigned short>(*(data + ARP_SPA_OFFSET + i));
+	ss >> remove;
+	ss >> out;
+	ss.clear();
 }
 
 void ARP_Chunk::GetSourceHardwareAddress(std::string & out)
 {
+	stringstream ss;
+	char remove;
+	for (int i = 0; i < ARP_HA_SIZE; ++i)
+		ss << ":"<< setiosflags(ios::uppercase) << std::hex << std::setw(2)
+		<< std::setfill('0') << static_cast<unsigned short>(*(data + ARP_SHA_OFFSET+i)) ;
+	ss >> remove;
+	ss >> out;
+	ss.clear();
 }
 
 void ARP_Chunk::GetTargetProtocolAddress(std::string & out)
 {
+	char remove;
+	stringstream ss;
+	for (int i = 0; i < ARP_PA_SIZE; ++i)
+		ss << "." << std::dec << static_cast<unsigned short>(*(data + ARP_TPA_OFFSET + i));
+	ss >> remove;
+	ss >> out;
+	ss.clear();
 }
 
 void ARP_Chunk::GetTargetHardwareAddress(std::string & out)
 {
+	char remove;
+	stringstream ss;
+	for (int i = 0; i < ARP_HA_SIZE; ++i)
+		ss << ":" <<setiosflags(ios::uppercase) << std::hex << std::setw(2)
+		<< std::setfill('0') << static_cast<unsigned short>(*(data + ARP_THA_OFFSET + i));
+	ss >> remove;
+	ss >> out;
+	ss.clear();
+}
+
+std::string ARP_Chunk::ToString()
+{
+	string ret; short t;
+	string out;
+	t = GetHardwareType(ret);
+	out.append("HardwareType:").append(ret).append("\n");
+
+	t = GetProtocolType(ret);
+	out.append("ProtocolType:").append(ret).append("\n");
+
+	t = GetHardwareAddressLength(ret);
+	out.append("HardwareAddressLength:").append(ret).append("\n");
+
+	t = GetProtocolAddressLength(ret);
+	out.append("ProtocolAddressLength:").append(ret).append("\n");
+
+	t = GetOperationCode(ret);
+	out.append("OperationCode:").append(ret).append("\n");
+
+	GetSourceHardwareAddress(ret);
+	out.append("SourceHardwareAddress:	").append(ret).append("\n");
+
+	GetSourceProtocolAddress(ret);
+	out.append("SourceProtocolAddress:	").append(ret).append("\n");
+
+	GetTargetHardwareAddress(ret);
+	out.append("TargetHardwareAddress:	").append(ret).append("\n");
+
+	GetTargetProtocolAddress(ret);
+	out.append("TargetProtocolAddress:	").append(ret).append("\n");
+
+	return out;
 }
 
 void ARP_Chunk::setHardwareAddressStr(const char* addr, string& out)
@@ -178,7 +256,7 @@ void ARP_Chunk::setHardwareAddressStr(const char* addr, string& out)
 	string trans;
 	buff.erase(std::remove(buff.begin(), buff.end(), ':'), buff.end());
 	size_t len = buff.length();
-	for (long i = 0; i < len; i += 2)
+	for (size_t i = 0; i < len; i += 2)
 	{
 		string byte = buff.substr(i, 2);
 		//×Ö·û´®×ªÕûÐÎ

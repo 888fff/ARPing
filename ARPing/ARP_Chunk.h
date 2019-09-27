@@ -23,6 +23,8 @@ class ARP_Chunk
 {
 public:
 	ARP_Chunk();
+	ARP_Chunk(const void* packet, long len);
+
 	~ARP_Chunk();
 	//
 	void SetHardwareType(short t);
@@ -54,6 +56,8 @@ public:
 	void GetSourceHardwareAddress(std::string& out);
 	void GetTargetProtocolAddress(std::string& out);
 	void GetTargetHardwareAddress(std::string& out);
+
+	std::string ToString();
 
 
 
