@@ -12,7 +12,13 @@
 #define ARP_SPA_OFFSET 14
 #define ARP_THA_OFFSET 18
 #define ARP_TPA_OFFSET 24
+//
+#define ARP_PT_IP 2048
+#define ARP_OC_REQUEST 1
+#define ARP_OC_RESPONSE 2
 
+
+#include <string>
 class ARP_Chunk
 {
 public:
@@ -38,7 +44,25 @@ public:
 	void SetTargetProtocolAddressStr(const char* addr);
 
 	inline const unsigned char* GetData() { return data; }
+public:
+	short GetHardwareType(std::string& out);
+	short GetProtocolType(std::string& out);
+	unsigned char GetHardwareAddressLength(std::string& out);
+	unsigned char GetProtocolAddressLength(std::string& out);
+	short GetOperationCode(std::string& out);
+	void GetSourceProtocolAddress(std::string& out);
+	void GetSourceHardwareAddress(std::string& out);
+	void GetTargetProtocolAddress(std::string& out);
+	void GetTargetHardwareAddress(std::string& out);
+
+
+
+
 private:
 	unsigned char data[ARP_CHUNK_SIZE];
+	void setHardwareAddressStr(const char* addr, std::string& out);
+	void setProtocolAddressStr(const char* addr, std::string& out);
+
+
 };
 

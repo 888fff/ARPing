@@ -1,2 +1,2 @@
 #pragma once
-#define BYTE unsigned char*
+#define BYTE unsigned char
