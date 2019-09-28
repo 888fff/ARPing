@@ -14,26 +14,43 @@ using namespace std;
 //-----------
 int main()
 {
-	std::cout << "Hello ARP!\n" << endl;
+	std::cout << "****** Hello ARP! ******\n" << endl;
+	//------------------------------------------------
+	//		WinPcap Test Code hhh~~
+	//------------------------------------------------
+	ARP_Sender arp_sender;
+	arp_sender.Init();
+	int	inum;
+	scanf_s("%d", &inum);	
+	if (!arp_sender.SeletAdapter(inum)) {
+		return -1;
+	}
+	printf("输入请求的ARP的IP:\n");
+	char ip_str[18];
+	scanf_s("%s", ip_str,18);
+	//创建arp chunk
 	ARP_Chunk chunk;
 	chunk.SetHardwareType(1);
 	chunk.SetProtocolType(ARP_PT_IP);
 	chunk.SetHardwareAddressLength(6);
 	chunk.SetProtocolAddressLength(4);
 	chunk.SetOperationCode(ARP_OC_REQUEST);
-	chunk.SetSourceHardwareAddressStr("00:a0:24:71:e4:44");
-	chunk.SetSourceProtocolAddressStr("128.143.137.144");
+	chunk.SetSourceHardwareAddress(arp_sender.GetCurMacAddr());
+	chunk.SetSourceProtocolAddress(arp_sender.GetCurIPAddr());
 	chunk.SetTargetHardwareAddressStr(0);
-	chunk.SetTargetProtocolAddressStr("128.143.137.1");
-	const BYTE* buffer = chunk.GetData();
-
-	//------------------------------------------------
-	//		WinPcap Test Code
-	//------------------------------------------------
-	ARP_Sender arp_sender;
-	arp_sender.Init();
-	arp_sender.CaptureARPPacket();
-
+	chunk.SetTargetProtocolAddressStr(ip_str);
+	//
+	string tmp;
+	chunk.GetTargetProtocolAddress(tmp);
+	printf("-----开始向%s发送ARP请求-----\n",tmp.c_str());
+	//
+	arp_sender.CaptureARPPacket(ip_str);
+	for (int i = 0; i < 4; ++i) {
+		if (!arp_sender.SendPacket(chunk.GetData())) {
+			return -1;
+		}
+		Sleep(1000);
+	}
 	return 0;
 
 }

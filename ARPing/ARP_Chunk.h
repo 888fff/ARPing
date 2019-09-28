@@ -1,5 +1,5 @@
 #pragma once
-#define ARP_CHUNK_SIZE 28
+#define ARP_CHUNK_SIZE (28+18)	//28ÓÐÐ§Î»ÖÃ  18 pading
 #define ARP_HA_SIZE 6
 #define ARP_PA_SIZE 4
 
@@ -58,9 +58,6 @@ public:
 	void GetTargetHardwareAddress(std::string& out);
 
 	std::string ToString();
-
-
-
 
 private:
 	unsigned char data[ARP_CHUNK_SIZE];

@@ -1,30 +1,15 @@
 #pragma once
 #include<string>
+#define FRAME_ARP_LEN (14+48)
+#define FRAME_ARP_TYPE 0x0806
 using namespace std;
 class NetFrame
 {
 public:
 	NetFrame();
 	~NetFrame();
-	void CreateARPFrame(unsigned char* frame_data);
-
-
-
 public:
-	//
-	void FillFrame(unsigned char* data);
-	void ToString();
-	//
-	string GetDestinationString();
-	long   GetDestination();
-	//
-	string GetSourceSting();
-	long	GetSource();
-	//
-	int		GetType();
-	//
-	const unsigned char* GetData();
+	static void CreateARPFrame(const unsigned char* dest, const unsigned char* source, const unsigned char* arp_data, unsigned char* data);
 protected:
-	unsigned char data[1600];
 };
 
