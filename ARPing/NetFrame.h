@@ -1,6 +1,6 @@
 #pragma once
 #include<string>
-#define FRAME_ARP_LEN (14+48)
+#define FRAME_ARP_LEN (14+28)
 #define FRAME_ARP_TYPE 0x0806
 using namespace std;
 class NetFrame

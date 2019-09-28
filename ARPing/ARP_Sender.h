@@ -2,7 +2,6 @@
 #include <iostream>
 #include "pcap.h"
 
-static struct timeval g_tv;
 class ARP_Sender
 {
 public:
@@ -12,15 +11,15 @@ public:
 	bool Init();
 	bool SeletAdapter(int idx);
 	bool SendPacket(const unsigned char* chunk_data);
-	bool CaptureARPPacket(const char* ip);
+	bool SetFilter(const char* ip);
+	int CaptureARPPacket();
 	void Release();
-	//
-	static void Packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_char *pkt_data);
 private:
 	bool GetAdapterMac();
 	bool GetAdapterIP();
 	char*	iptos(u_long in);
 	void MakeTimeStamp();
+	void Packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_char *pkt_data);
 private:
 	pcap_t*		adapterHandler;
 	pcap_if_t*	alldevs;
@@ -30,6 +29,7 @@ private:
 	u_int		netmask;
 	bpf_program fcode;
 	int			max_devs;
+	struct timeval m_tv;
 	//
 	unsigned char mac_addr[6];
 	unsigned char ip_addr[4];

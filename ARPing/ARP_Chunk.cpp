@@ -87,7 +87,7 @@ void ARP_Chunk::SetTargetHardwareAddress(const unsigned char * addr)
 	if (addr)
 		memcpy(data + ARP_THA_OFFSET, addr, ARP_HA_SIZE);
 	else
-		memset(data + ARP_THA_OFFSET, 0, ARP_HA_SIZE);
+		memset(data + ARP_THA_OFFSET, 0xff, ARP_HA_SIZE);
 }
 
 void ARP_Chunk::SetTargetHardwareAddressStr(const char * addr)

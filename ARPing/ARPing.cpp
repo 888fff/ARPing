@@ -42,14 +42,16 @@ int main()
 	//
 	string tmp;
 	chunk.GetTargetProtocolAddress(tmp);
+	arp_sender.SetFilter(ip_str);
 	printf("-----开始向%s发送ARP请求-----\n",tmp.c_str());
 	//
-	arp_sender.CaptureARPPacket(ip_str);
-	for (int i = 0; i < 4; ++i) {
-		if (!arp_sender.SendPacket(chunk.GetData())) {
-			return -1;
+	
+	if (arp_sender.SendPacket(chunk.GetData())) {
+		for (int counter = 1; counter < 4;counter++) {
+			while (arp_sender.CaptureARPPacket()<=0){}
+			arp_sender.SendPacket(chunk.GetData());
 		}
-		Sleep(1000);
+
 	}
 	return 0;
 

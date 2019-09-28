@@ -52,12 +52,12 @@ bool ARP_Sender::SeletAdapter(int idx)
 {
 	if (idx < 1 || idx > max_devs)
 	{
-		cout << "Interface number out of range." << endl;
-		Release();
-		return false;
+	cout << "Interface number out of range." << endl;
+	Release();
+	return false;
 	}
 
-	/* 跳转到选中的适配器 */	
+	/* 跳转到选中的适配器 */
 	adapterDevice = alldevs;
 	for (int i = 0; i < idx - 1; adapterDevice = adapterDevice->next, i++);
 
@@ -65,7 +65,7 @@ bool ARP_Sender::SeletAdapter(int idx)
 		65536,     // 要捕捉的数据包的部分 
 				   // 65535保证能捕获到不同数据链路层上的每个数据包的全部内容
 		PCAP_OPENFLAG_PROMISCUOUS,         // 混杂模式
-		1000,      // 读取超时时间
+		1,      // 读取超时时间
 		NULL,      // 远程机器验证
 		errbuf     // 错误缓冲池
 	)) == NULL)
@@ -108,7 +108,7 @@ bool ARP_Sender::SeletAdapter(int idx)
 bool ARP_Sender::SendPacket(const unsigned char * chunk_data)
 {
 	unsigned char data[FRAME_ARP_LEN];
-	NetFrame::CreateARPFrame(0,mac_addr, chunk_data, data);
+	NetFrame::CreateARPFrame(0, mac_addr, chunk_data, data);
 
 	if (pcap_sendpacket(adapterHandler, data, FRAME_ARP_LEN) != 0)
 	{
@@ -120,12 +120,11 @@ bool ARP_Sender::SendPacket(const unsigned char * chunk_data)
 	return true;
 }
 
-bool ARP_Sender::CaptureARPPacket(const char* ip)
+bool ARP_Sender::SetFilter(const char * ip)
 {
 	char ip_str[18];
 	strcpy_s(ip_str, iptos(*(long*)ip_addr));
-	sprintf_s(packet_filter, "arp src host %s and dst host %s", ip , ip_str);
-	//sprintf_s(packet_filter, "arp");
+	sprintf_s(packet_filter, "arp src host %s and dst host %s", ip, ip_str);
 
 	//编译过滤器
 	if (pcap_compile(adapterHandler, &fcode, packet_filter, 1, netmask) < 0)
@@ -143,11 +142,24 @@ bool ARP_Sender::CaptureARPPacket(const char* ip)
 		return false;
 	}
 
-	pcap_handler callback = (pcap_handler)&ARP_Sender::Packet_handler;//强制转换
-
-	pcap_loop(adapterHandler, 0, callback, NULL);
-
 	return true;
+}
+
+int ARP_Sender::CaptureARPPacket()
+{
+	//pcap_handler callback = (pcap_handler)&ARP_Sender::Packet_handler;//强制转换
+	//pcap_loop(adapterHandler, 0, callback, NULL);
+
+	int					res;
+	struct pcap_pkthdr  *header = 0;
+	const u_char		*pkt_data = 0;
+
+	if ((res = pcap_next_ex(adapterHandler, &header, &pkt_data)) >= 0){
+		Packet_handler(0, header, pkt_data);
+		return res;
+	}
+
+	return res;
 }
 
 void ARP_Sender::Release()
@@ -160,21 +172,22 @@ void ARP_Sender::Release()
 
 void ARP_Sender::Packet_handler(u_char * param, const pcap_pkthdr * header, const u_char * pkt_data)
 {
+	
 	struct tm ltime;
 	char timestr[16];
 	time_t local_tv_sec;
+	//
+	if (header == 0 || pkt_data == 0) return;
 
 	/* 将时间戳转换成可识别的格式 */
 	local_tv_sec = header->ts.tv_sec;
 	localtime_s(&ltime,&local_tv_sec);
 	strftime(timestr, sizeof timestr, "%H:%M:%S", &ltime);
-	long delay = (header->ts.tv_sec - g_tv.tv_sec) * 1000 + (header->ts.tv_usec - g_tv.tv_usec);
+	float delay = (header->ts.tv_sec - m_tv.tv_sec) * 1000 + (header->ts.tv_usec - m_tv.tv_usec) * 0.001;
 	/* 打印数据包的时间戳和长度 */
-	printf("%s delay:%d ms len:%d \n", timestr, delay , header->len);
+	printf("%s delay:%.6f ms len:%d \n", timestr, delay , header->len);
 	ARP_Chunk chunk( pkt_data + 14 ,28);
 	printf("%s\n ", chunk.ToString().c_str());
-
-
 }
 
 bool ARP_Sender::GetAdapterMac()
@@ -291,6 +304,6 @@ void ARP_Sender::MakeTimeStamp()
 	tm.tm_sec = wtm.wSecond;
 	tm.tm_isdst = -1;
 	clock = mktime(&tm);
-	g_tv.tv_sec = clock;
-	g_tv.tv_usec = wtm.wMilliseconds;
+	m_tv.tv_sec = clock;
+	m_tv.tv_usec = wtm.wMilliseconds*1000;
 }

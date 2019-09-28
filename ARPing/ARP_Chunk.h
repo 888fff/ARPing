@@ -1,5 +1,5 @@
 #pragma once
-#define ARP_CHUNK_SIZE (28+18)	//28有效位置  18 pading
+#define ARP_CHUNK_SIZE (28)	//28有效位置  18 pading
 #define ARP_HA_SIZE 6
 #define ARP_PA_SIZE 4
 
